@@ -105,8 +105,14 @@ async def submit_primary_answers(
     track.status = InterviewStatus.PRIMARY_ANSWERS_SUBMITTED
     db.commit()
 
-    # FIXED: Non-blocking async loop task generation to eliminate background thread freezes
-    asyncio.create_task(run_crew_2_async(track.id, track.application.job.description, track.application.cv_text, primary_text_ans))
+    # ─── UPDATED ASYNC TASK LINE: Added track.primary_questions ───
+    asyncio.create_task(run_crew_2_async(
+        track.id, 
+        track.application.job.description, 
+        track.application.cv_text, 
+        track.primary_questions,  # ◄─── INJECTED THIS VARIABLE PARAMETER
+        primary_text_ans
+    ))
     return {"message": "Primary responses logged."}
 
 
