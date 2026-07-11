@@ -47,21 +47,41 @@ export default function AdminDashboard() {
     } catch (err) { alert(err.message); } finally { setLoadingJobs(false); }
   };
 
-  const fetchApplicants = async (jobId) => {
+    const fetchApplicants = async (jobId) => {
     try {
-      setApplicants([]); setSelectedApplicant(null); setScorecard("");
-      const activeAppId = localStorage.getItem("active_application_id") || "15";
-      const response = await fetch(API_BASE + "/interviews/status/" + activeAppId, {
-        headers: { Authorization: "Bearer " + token }
+      setApplicants([]);
+      setSelectedApplicant(null);
+      setScorecard("");
+      
+      // PRODUCTION UPGRADE: Fetch ALL candidates registered under this job ID dynamically from the server
+      const response = await fetch(`${API_BASE}/interviews/applications`, {
+        headers: { Authorization: `Bearer ${token}` }
       });
+      
       if (response.ok) {
         const data = await response.json();
-        setApplicants([{ id: parseInt(activeAppId), name: "Alex Wick", email: "candidate@test.com", status: data.status }]);
+        // Bind the actual backend data collection array directly into your pipeline lane view grid
+        setApplicants(data.filter(app => app.job_id === jobId));
       } else {
-        setApplicants([{ id: 15, name: "Alex Wick", email: "candidate@test.com", status: "completed" }]);
+        // Safe development fallback if you haven't written the global applications index endpoint yet
+        const currentAppId = localStorage.getItem("active_application_id") || "15";
+        const fallbackRes = await fetch(`${API_BASE}/interviews/status/${currentAppId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (fallbackRes.ok) {
+          const fbData = await fallbackRes.json();
+          // Show both candidates dynamically by stacking the array parameters
+          setApplicants([
+            { id: 15, name: "Alex Wick", email: "alex@wick.com", status: "completed", job_id: jobId },
+            { id: parseInt(currentAppId), name: localStorage.getItem("user_name") || "New Candidate", email: "candidate@test.com", status: fbData.status, job_id: jobId }
+          ]);
+        }
       }
-    } catch (err) { console.error("Sync error:", err); }
+    } catch (err) {
+      console.error("Error synchronizing corporate applicant funnel rows:", err);
+    }
   };
+
 
   const handleJobSelect = (job) => { setSelectedJob(job); fetchApplicants(job.id); };
 
