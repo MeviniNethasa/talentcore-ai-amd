@@ -24,30 +24,45 @@ current_key_index = 0
 
 @CrewBase
 class InterviewCrew():
-    """Interview evaluation and scoring crew with automated key rotation"""
+    """Interview evaluation and scoring crew with AMD acceleration and fallback key rotation"""
 
     agents: List[BaseAgent]
     tasks: List[Task]
 
     def __init__(self) -> None:
-        if not API_KEYS:
-            raise ValueError("No Gemini API keys found in your environment/.env configuration.")
+        # HACKATHON CONFIGURATION TRACK: Route to AMD Instinct GPU Cloud Cluster if enabled
+        if os.getenv("USE_AMD_HARDWARE") == "true":
+            print("\n[AMD CLOUD HARDWARE PIPELINE]: Offloading agent execution natively to AMD Instinct GPU nodes...")
+            self._llm_instance = LLM(
+                model="openai/" + os.getenv("AMD_MODEL_NAME", "llama3"), 
+                base_url=os.getenv("AMD_GPU_ENDPOINT_URL"),
+                api_key=os.getenv("AMD_GPU_ACCESS_TOKEN", "hf_mock_token"),
+                temperature=0.2
+            )
+        else:
+            # Standard development configuration using your secure multi-key rotation fallback loop
+            if not API_KEYS:
+                raise ValueError("No Gemini API keys found in your environment/.env configuration.")
             
-        self._llm_instance = LLM(
-            model="gemini/gemini-2.5-flash",
-            temperature=0.2,
-            api_key=API_KEYS[current_key_index]
-        )
+            self._llm_instance = LLM(
+                model="gemini/gemini-2.5-flash",
+                temperature=0.2,
+                api_key=API_KEYS[current_key_index]
+            )
         
         # Initialize LiteLLM error rotation listeners immediately upon class instantiation
         self.configure_rotation_callbacks()
 
     def configure_rotation_callbacks(self):
-        """Register failure hooks into LiteLLM to capture rate limits seamlessly"""
+        """Register failure hooks into LiteLLM to capture rate limits seamlessly during cloud mode"""
         import litellm
         
         def handle_litellm_error(exception):
             global current_key_index
+            # If using native hardware cluster, bypass standard API rotation logic loops
+            if os.getenv("USE_AMD_HARDWARE") == "true":
+                return
+                
             error_msg = str(exception)
             if "429" in error_msg or "RESOURCE_EXHAUSTED" in error_msg or "Quota" in error_msg or "503" in error_msg or "UNAVAILABLE" in error_msg:
                 print(f"\n[Warning] Gemini Key Index {current_key_index} hit a cloud spike ({error_msg}). Rotating key...")
@@ -59,11 +74,17 @@ class InterviewCrew():
         litellm.failure_callback = [handle_litellm_error]
 
     def update_and_fetch_llm(self) -> LLM:
-        """Updates internal key matrices and forces Pylance reference tracking safety"""
+        """Updates internal key matrices and forces Pylance reference tracking safety across frames"""
         global current_key_index
+        
+        # If running in hardware acceleration mode, preserve sandbox credentials
+        if os.getenv("USE_AMD_HARDWARE") == "true":
+            return self._llm_instance
+            
         self._llm_instance.api_key = API_KEYS[current_key_index]
         os.environ["GEMINI_API_KEY"] = API_KEYS[current_key_index]
         return self._llm_instance
+
 
     @agent
     def cv_scanner(self) -> Agent:
