@@ -1,0 +1,81 @@
+@import "tailwindcss";
+
+
+/* =========================================================
+   CUSTOM VECTOR AI ORB ANIMATIONS BASE LAYER
+   ========================================================= */
+:root {
+  --orb-size: 130px;
+  --color-primary: #00d2ff;
+  --color-secondary: #3a7bd5;
+  --color-thinking: #7f00ff;
+  --color-success: #00ff88;
+}
+
+.orb-container {
+  position: relative;
+  width: var(--orb-size);
+  height: var(--orb-size);
+}
+
+.orb-vector {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  transition: all 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  background: radial-gradient(circle at 30% 30%, rgba(255,255,255,0.2) 0%, transparent 50%),
+              radial-gradient(circle at center, var(--color-primary), var(--color-secondary));
+  box-shadow: 0 0 40px var(--color-secondary), inset 0 0 20px rgba(255,255,255,0.3);
+}
+
+/* --- STATE: IDLE --- */
+.orb-vector.idle {
+  animation: orb-idle-pulse 3s ease-in-out infinite;
+}
+@keyframes orb-idle-pulse {
+  0%, 100% { transform: scale(1); filter: brightness(1); box-shadow: 0 0 35px var(--color-secondary); }
+  50% { transform: scale(1.06); filter: brightness(1.25); box-shadow: 0 0 55px var(--color-primary); }
+}
+
+/* --- STATE: THINKING --- */
+.orb-vector.thinking {
+  background: radial-gradient(circle at center, var(--color-thinking), #3f00b5);
+  box-shadow: 0 0 65px var(--color-thinking);
+  animation: orb-thinking-spin 0.6s linear infinite, orb-thinking-jitter 0.2s ease-in-out infinite alternate;
+}
+@keyframes orb-thinking-spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+@keyframes orb-thinking-jitter {
+  from { transform: scale(0.94); filter: hue-rotate(0deg); }
+  to { transform: scale(1.08); filter: hue-rotate(35deg); }
+}
+
+/* --- STATE: SUCCESS --- */
+.orb-vector.success {
+  background: radial-gradient(circle at center, #fff, var(--color-success));
+  box-shadow: 0 0 85px var(--color-success);
+  transform: scale(1.25);
+}
+.orb-vector.success::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 100%; height: 100%;
+  background: white;
+  border-radius: 50%;
+  transform: translate(-50%, -50%);
+  animation: orb-burst-out 0.8s ease-out forwards;
+}
+@keyframes orb-burst-out {
+  0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
+  100% { transform: translate(-50%, -50%) scale(2.6); opacity: 0; }
+}
+
+.tech-grid-mesh {
+  background-size: 40px 40px;
+  background-image: linear-gradient(to right, rgba(255, 255, 255, 0.03) 1px, transparent 1px),
+                    linear-gradient(to bottom, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+}

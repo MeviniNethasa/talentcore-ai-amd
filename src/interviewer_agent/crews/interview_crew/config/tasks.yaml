@@ -1,0 +1,87 @@
+scan_task:
+  description: >
+    Conduct a rigorous, feature-by-feature analysis of the candidate's CV text: "{cv_text}" 
+    and compare it directly against the target Job Description: "{job_description}".
+
+    Your analysis must explicitly extract:
+    1. Perfect Alignment: Hard technical skills and tools that match both documents exactly.
+    2. Subtle Skill Gaps: Frame names, tool ecosystem variations, or architectural gaps (e.g., candidate knows Flask, but the job requires FastAPI microservices).
+    3. Experience & Tenure Variances: Years of practical experience vs. the seniority requested in the job description.
+    4. Vulnerabilities: Vague descriptions or lack of concrete metrics in their past achievements.
+  expected_output: >
+    A well-structured, professional recruitment gap-report in Markdown format containing:
+    - An executive alignment summary.
+    - A bulleted list of 3-5 critical technical/domain vulnerabilities that must be rigorously tested in the next phase.
+  agent: cv_scanner
+
+generate_questions_task:
+  description: >
+    Review the complete output of the scan_task. Your goal is to design a targeted, non-generic primary interview assessment.
+    
+    Note: The candidate answers are currently: "{primary_answers}". Ignore this placeholder for now and focus purely on generating the questions.
+
+    Using the 3-5 technical vulnerabilities identified by the scanner, generate exactly 3 highly specific interview questions.
+    
+    Your questions must avoid generic templates (e.g., DO NOT ask "What are your strengths?"). Instead, formulate context-driven questions:
+    1. Question 1: A deep technical scenario targeting their biggest software/tool stack gap.
+    2. Question 2: An architectural design choice problem forcing them to justify their practical engineering methodologies.
+    3. Question 3: A behavioral situational question testing how they handle constraints or legacy systems related to this role.
+  expected_output: >
+    A list of exactly 3 numbered, high-impact interview questions tailored specifically to break past superficial surface answers.
+  agent: primary_interviewer
+
+followup_task:
+  description: >
+    Analyze the candidate's primary answers: "{primary_answers}" against the generated primary questions: "{primary_questions_report}" and the Job Description: "{job_description}".
+    
+    Identify any areas where their answers were surface-level, missed key technical details, or lacked structural depth. Formulate exactly 2 targeted, professional follow-up questions to probe those gaps.
+    
+    CRITICAL INTERFACE RULE: Do NOT output any internal analysis, critique, corrections, grading metrics, or introductory remarks (such as 'Here is a cross-examination...'). The candidate must never see your criticism. Your output must contain ONLY the 2 follow-up questions.
+  expected_output: >
+    Exactly 2 clean, direct follow-up interview questions in plain text or simple bullet points. No introductory text, no critique headers, and no internal agent analysis blocks.
+  agent: followup_interviewer
+
+
+score_task:
+  description: >
+    Conduct a high-level, executive HR audit and technical review of the complete candidate screening cycle, analyzing:
+    - The structural CV resume context: "{cv_text}"
+    - The target Job Description requirements: "{job_description}"
+    - The primary questions context: "{primary_questions_report}"
+    - The candidate's primary responses: "{primary_answers}"
+    - The follow-up screening queries: "{followup_questions_report}"
+    - The candidate's follow-up technical statements: "{followup_answers}"
+
+    Evaluate the candidate across exactly 4 operational performance dimensions:
+    1. Technical Stack Match
+    2. Problem-Solving & Depth
+    3. Communication Clarity
+    4. Role Alignment & Core Suitability
+
+    Scoring Rule: Assign a deterministic integer rating from 1 to 10 for each dimension based on structural alignment.
+    Reporting Rule: Do NOT include raw SQL database queries, technical code blocks, programming scripts, variable names, or syntax constraints (such as SERIAL PRIMARY KEY, JSONB, etc.) in the text parameters. Instead, summarize their skills using high-level engineering descriptions (e.g., 'Demonstrates strong mastery over concurrent transaction models and memory optimization paths'). Keep the language simple, direct, and completely free of complex internal jargon phrases like 'Verbatim Evidence' or 'Exceeding Seniority Expectations'.
+  expected_output: >
+    A publication-grade Executive Candidate Evaluation Report formatted in clean, highly structured Markdown using these exact headings:
+
+    ### 📊 Executive Summary Matrix
+
+    | Evaluation Dimension | Assessed Rating (1-10) |
+    | :--- | :--- |
+    | 1. Technical Stack Match | [Score] / 10 |
+    | 2. Problem-Solving & Depth | [Score] / 10 |
+    | 3. Communication Clarity | [Score] / 10 |
+    | 4. Role Alignment & Suitability | [Score] / 10 |
+    | **Aggregated Evaluation Score** | **[Average] / 10** |
+
+    ###  Key Engineering Strengths
+    - **Technical Competency**: A concise 2-sentence summary of their primary framework mastery. Prove it by referencing concepts from their answers without dumping raw text quotes.
+    - **System Architecture**: A concise 2-sentence summary of their ability to scale and optimize data structures.
+    - **Communication**: A brief description of their ability to articulate technical trade-offs clearly.
+
+    ###  Identified Gaps & Risks
+    - Provide a short bulleted list of any architectural blind spots or areas where their response parameters lacked complete depth.
+
+    ###  Final Placement Verdict
+    **Hiring Recommendation:** [STRONG HIRE / PASS / NO HIRE]
+  agent: grading_panel
+
